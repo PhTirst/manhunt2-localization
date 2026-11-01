@@ -342,10 +342,13 @@ namespace
         config = fixture.Config();
         mh2::BuildProject(config);
         const auto sharedDat = mh2::ReadBytes(datPath), sharedTex = mh2::ReadBytes(texPath);
-        const auto font1Path = mh2::SingleTtf(config.fontDir / "font1");
-        auto fontBytes = mh2::ReadBytes(font1Path);
+        auto fontBytes = mh2::ReadBytes(mh2::SingleTtf(config.fontDir / "font1"));
         fontBytes.push_back(0); // Same TTF outlines, different SHA-256: bypass cross-role raw-glyph reuse.
-        mh2::WriteBytes(font1Path, fontBytes);
+        // Windows may retain a mapped font after unregistering it. Never rewrite
+        // a font already used by GDI; select a separate, otherwise equivalent pair.
+        mh2::WriteBytes(root / "TTF-distinct/font1/alternate.ttf", fontBytes);
+        mh2::WriteBytes(root / "TTF-distinct/font2/alternate.ttf", mh2::ReadBytes(mh2::SingleTtf(config.fontDir / "font2")));
+        fixture.Set("fontDirectory", mh2::JsonValue::String("TTF-distinct")); config = fixture.Config();
         mh2::BuildProject(config);
         Check(mh2::ReadBytes(datPath) == sharedDat && mh2::ReadBytes(texPath) == sharedTex,
             "Same-font/size reuse never carries alpha or outline styles into another role");

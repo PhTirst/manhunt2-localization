@@ -1,0 +1,45 @@
+name: Windows build, test and package
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure clang-cl x64
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL -DBUILD_TESTING=ON
+      - name: Build
+        run: cmake --build build --config ${{ matrix.configuration }} --parallel
+      - name: Synthetic regression and CLI tests
+        run: ctest --test-dir build -C ${{ matrix.configuration }} --output-on-failure
+      - name: Package resource-free tool
+        if: matrix.configuration == 'Release'
+        run: cpack --config build/CPackConfig.cmake -C Release -B build/package
+      - name: Audit ZIP and test extracted BAT files
+        if: matrix.configuration == 'Release'
+        run: |
+          $archives = @(Get-ChildItem build/package/*.zip)
+          if ($archives.Count -ne 1) {throw 'Expected one tool ZIP'}
+          ./tests/verify-package.ps1 -Archive $archives[0].FullName -TestRoot build/package-smoke
+      - name: Upload tool ZIP and checksum
+        if: matrix.configuration == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mh2loc-windows-x64
+          path: |
+            build/package/*.zip
+            build/package/*.sha256
+      - name: Failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.configuration }}
+          path: build/Testing/Temporary/LastTest.log

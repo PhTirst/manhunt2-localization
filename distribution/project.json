@@ -1,0 +1,17 @@
+{
+  "language": "zh_CN",
+  "gameDirectory": "..",
+  "originalDirectory": "original",
+  "jsonDirectory": "JSON",
+  "fontDirectory": "TTF",
+  "outputDirectory": "dist",
+  "cacheDirectory": ".cache",
+  "texTemplate": null,
+  "fallbackFont": null,
+  "asciiFont": null,
+  "glyphSource": "ttf-first",
+  "font1": { "size": 31, "renderSize": 31, "outlineWidth": 0, "alphaGain": 2.6 },
+  "font2": { "size": 30, "renderSize": 30, "outlineWidth": 0, "alphaGain": 2.2 },
+  "workerThreads": 0,
+  "cacheGlyphs": false
+}
